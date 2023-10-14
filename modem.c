@@ -8,8 +8,8 @@
 
 typedef enum {kData, kWifi, kUnknown} MEDIUM;
 
-typedef struct network {
- char* network_name;
+struct network {
+ char network_name[10]; 
  int signal_strength;
  MEDIUM connection_medium;
  bool password_saved;
@@ -38,21 +38,34 @@ MEDIUM ConvertIntToMedium(int int_medium) {
   * The fixes found in this function will help determine how to fix V2.
   */
 void ScanNetworks() {
-  char* temp_name;
+  // Initialize needed vars
+  char temp_name[10];
   int medium;
-  char
 
+  // Initialize File ptr and open 'experiment_data'
+  FILE *ptr = fopen("experiment_data","r"); 
+
+  // For each network
   for (int i = 0; i < num_networks; i++) {
-    temp_name = (char *)malloc(strlen(20) * sizeof(char));
+    // Read temp_name
+    fscanf(ptr,"%s", temp_name);
 
-    scanf("%s", temp_name);
-    scanf("%d %d %d", &medium,
+    // Read medium, signal_strength, password_saved
+    fscanf(ptr,"%d %d %d", &medium,
                         &cached_networks[i].signal_strength,
                         &cached_networks[i].password_saved);
+    
+    // Copy temp_name to network_name
     strcpy(cached_networks[i].network_name, temp_name);
+
+    // Print network_name
     printf("%s\n", cached_networks[i].network_name);
+
+    // Call Helper function 
     cached_networks[i].connection_medium = ConvertIntToMedium(medium);
   }
+  // close file ptr
+  fclose(ptr);
 }
 
 /**
@@ -63,24 +76,28 @@ void ScanNetworks() {
   * TODO: This function is buggy and not complete
   */
 void ScanNetworksV2() {
-  char* network_name;
+  // Define necessary vars
+  char network_name[10];
   int signal_strength;
   int medium;
   bool password_saved;
   int i = 0;
 
+  FILE *ptr = fopen("experiment_data","r");
+
   while (i < num_networks) {
-    scanf("%s %d %d %d", &network_name, &medium, &signal_strength,
+    fscanf(ptr,"%s",network_name);
+    fscanf(ptr,"%d %d %d", &medium, &signal_strength,
                          &password_saved);
 
     // Only cache networks we can't even connect to
     if (password_saved) {
-      cached_networks[i].network_name = network_name;
+      strcpy(cached_networks[i].network_name,network_name);
       cached_networks[i].connection_medium = ConvertIntToMedium(medium);
       cached_networks[i].signal_strength = signal_strength;
       cached_networks[i].password_saved = password_saved;
-      i++;
     }
+    i++;
   }
 }
 
