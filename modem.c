@@ -120,7 +120,43 @@ void ScanNetworksV3() {
   * return      String of best network_name
   */
 char* DetermineNetwork(char* criteria) {
-  // Iterate through cached_networks to choose the best network
+    char best_network_name[10];
+    int maxCritera = 0;
+    if (strcmp(criteria, "wifi") == 0) {
+        for (int i = 0; i < num_networks; i++) {
+            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == 2) {
+                if (maxCritera < cached_networks[i].signal_strength) {
+                    strcpy(best_network_name, cached_networks[i].network_name);
+                    maxCritera = cached_networks[i].signal_strength;
+                }
+            } else {
+                continue;
+            }
+        }
+    } else if (strcmp(criteria, "data") == 0) {
+        for (int i = 0; i < num_networks; i++) {
+            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == 1) {
+                if (maxCritera < cached_networks[i].signal_strength) {
+                    strcpy(best_network_name, cached_networks[i].network_name);
+                    maxCritera = cached_networks[i].signal_strength;
+                }
+            } else {
+                continue;
+            }
+        }
+    } else {
+        for (int i = 0; i < num_networks; i++) {
+            if (cached_networks[i].password_saved) {
+                if (maxCritera < cached_networks[i].signal_strength) {
+                    strcpy(best_network_name, cached_networks[i].network_name);
+                    maxCritera = cached_networks[i].signal_strength;
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+    return best_network_name;
 }
 
 int main(int argc, char *argv[]) {
