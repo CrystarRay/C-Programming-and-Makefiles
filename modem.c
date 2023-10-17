@@ -5,11 +5,12 @@
 #include <string.h>
 
 #define num_networks 10
+#define MAX_LENGTH 20
 
 typedef enum {kData, kWifi, kUnknown} MEDIUM;
 
 struct network {
- char network_name[10]; 
+ char network_name[MAX_LENGTH]; 
  int signal_strength;
  MEDIUM connection_medium;
  bool password_saved;
@@ -17,8 +18,8 @@ struct network {
 
 struct network cached_networks[num_networks];
 
-void ChooseNetwork(char* network) {
-  printf("Network chosen: %s", network);
+void ChooseNetwork(char* network_name) {
+  printf("Network chosen: %s", network_name);
 }
 
 MEDIUM ConvertIntToMedium(int int_medium) {
@@ -31,6 +32,14 @@ MEDIUM ConvertIntToMedium(int int_medium) {
   }
 }
 
+bool ConvertCharToBoolean(char* str) {
+    if (strcmp(str, "false") == 0) {
+        return false;
+    } else{
+        return true;
+    }
+}
+
 /**
   * TODO: This function is buggy and not complete
   *
@@ -39,22 +48,29 @@ MEDIUM ConvertIntToMedium(int int_medium) {
   */
 void ScanNetworks() {
   // Initialize needed vars
-  char temp_name[10];
+  char temp_name[MAX_LENGTH];
   int medium;
+  char password_saved_char[6];
 
   // Initialize File ptr and open 'experiment_data'
   FILE *ptr = fopen("experiment_data","r"); 
 
+  if (ptr == NULL){
+    printf("Error opening the file.\n");
+    return;
+  }
   // For each network
   for (int i = 0; i < num_networks; i++) {
     // Read temp_name
     fscanf(ptr,"%s", temp_name);
 
     // Read medium, signal_strength, password_saved
-    fscanf(ptr,"%d %d %d", &medium,
+    fscanf(ptr,"%d %d %s", &medium,
                         &cached_networks[i].signal_strength,
-                        &cached_networks[i].password_saved);
+                        password_saved_char);
     
+    // Populate password_saved as bool
+    cached_networks[i].password_saved = ConvertCharToBoolean(password_saved_char);
     // Copy temp_name to network_name
     strcpy(cached_networks[i].network_name, temp_name);
 
@@ -77,28 +93,30 @@ void ScanNetworks() {
   */
 void ScanNetworksV2() {
   // Define necessary vars
-  char network_name[10];
+  char network_name[MAX_LENGTH];
   int signal_strength;
   int medium;
-  bool password_saved;
+  char password_saved_char[5];
   int i = 0;
 
   FILE *ptr = fopen("experiment_data","r");
 
   while (i < num_networks) {
     fscanf(ptr,"%s",network_name);
-    fscanf(ptr,"%d %d %d", &medium, &signal_strength,
-                         &password_saved);
+    fscanf(ptr,"%d %d %s", &medium, &signal_strength,
+                         password_saved_char);
 
+    
+    cached_networks[i].password_saved = ConvertCharToBoolean(password_saved_char);
     // Only cache networks we can't even connect to
-    if (password_saved) {
+    if (cached_networks[i].password_saved) {
       strcpy(cached_networks[i].network_name,network_name);
       cached_networks[i].connection_medium = ConvertIntToMedium(medium);
       cached_networks[i].signal_strength = signal_strength;
-      cached_networks[i].password_saved = password_saved;
     }
     i++;
   }
+  fclose(ptr);
 }
 
 void ScanNetworksV3() {
@@ -120,7 +138,7 @@ void ScanNetworksV3() {
   * return      String of best network_name
   */
 char* DetermineNetwork(char* criteria) {
-    char best_network_name[10];
+    char* best_network_name = (char*)malloc(MAX_LENGTH * sizeof(char));
     int maxCritera = 0;
     if (strcmp(criteria, "wifi") == 0) {
         for (int i = 0; i < num_networks; i++) {
@@ -171,6 +189,5 @@ int main(int argc, char *argv[]) {
   printf("Networks cached. Now determining network to connect...\n");
   printf("Connection Medium Criteria: %s", argv[1]);
   ChooseNetwork(DetermineNetwork(argv[1]));
-
   return 0;
 }
