@@ -67,7 +67,7 @@ void ScanNetworks() {
     // Read medium, signal_strength, password_saved
     fscanf(ptr,"%d %d %s", &medium,
                         &cached_networks[i].signal_strength,
-                        password_saved_char);
+                        &password_saved_char);
     
     // Populate password_saved as bool
     cached_networks[i].password_saved = ConvertCharToBoolean(password_saved_char);
