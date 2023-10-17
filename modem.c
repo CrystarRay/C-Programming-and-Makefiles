@@ -138,43 +138,48 @@ void ScanNetworksV3() {
   * return      String of best network_name
   */
 char* DetermineNetwork(char* criteria) {
-    char* best_network_name = (char*)malloc(MAX_LENGTH * sizeof(char));
-    int maxCritera = 0;
+    MEDIUM desired_medium;
+
+    // Determine the desired connection medium based on criteria
     if (strcmp(criteria, "wifi") == 0) {
-        for (int i = 0; i < num_networks; i++) {
-            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == 2) {
-                if (maxCritera < cached_networks[i].signal_strength) {
-                    strcpy(best_network_name, cached_networks[i].network_name);
-                    maxCritera = cached_networks[i].signal_strength;
-                }
-            } else {
-                continue;
-            }
-        }
+        desired_medium = kWifi;
     } else if (strcmp(criteria, "data") == 0) {
-        for (int i = 0; i < num_networks; i++) {
-            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == 1) {
-                if (maxCritera < cached_networks[i].signal_strength) {
-                    strcpy(best_network_name, cached_networks[i].network_name);
-                    maxCritera = cached_networks[i].signal_strength;
-                }
-            } else {
-                continue;
-            }
-        }
+        desired_medium = kData;
+    } else if (strcmp(criteria, "greedy") == 0) {
+        desired_medium = kUnknown; // Set to unknown for greedy so that all mediums are considered
     } else {
-        for (int i = 0; i < num_networks; i++) {
-            if (cached_networks[i].password_saved) {
-                if (maxCritera < cached_networks[i].signal_strength) {
-                    strcpy(best_network_name, cached_networks[i].network_name);
-                    maxCritera = cached_networks[i].signal_strength;
-                }
-            } else {
-                continue;
-            }
+        printf("Unknown criteria provided. Exiting.\n");
+        exit(1);
+    }
+
+    char* best_network = NULL;
+    int max_strength = -1; // Initialize with an impossible value to ensure any real value will be higher
+
+    for (int i = 0; i < num_networks; i++) {
+        // Check if network has saved password
+        if (!cached_networks[i].password_saved) {
+            continue;
+        }
+
+        // If we're not being greedy, check if the network's medium matches the desired medium
+        if (desired_medium != kUnknown && cached_networks[i].connection_medium != desired_medium) {
+            continue;
+        }
+
+        // Update the best network if this network's signal strength is greater than the current max
+        if (cached_networks[i].signal_strength > max_strength) {
+            max_strength = cached_networks[i].signal_strength;
+            best_network = cached_networks[i].network_name;
         }
     }
-    return best_network_name;
+
+    // If no suitable network was found, return NULL
+    if (!best_network) {
+        printf("No suitable network found based on the provided criteria.\n");
+        exit(1);
+    }
+
+    return best_network;
 }
 
 int main(int argc, char *argv[]) {
