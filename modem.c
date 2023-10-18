@@ -67,7 +67,7 @@ void ScanNetworks() {
     // Read medium, signal_strength, password_saved
     fscanf(ptr,"%d %d %s", &medium,
                         &cached_networks[i].signal_strength,
-                        &password_saved_char);
+                        password_saved_char);
     
     // Populate password_saved as bool
     cached_networks[i].password_saved = ConvertCharToBoolean(password_saved_char);
@@ -142,18 +142,19 @@ char* DetermineNetwork(char* criteria) {
     int maxCritera = 0;
     if (strcmp(criteria, "wifi") == 0) {
         for (int i = 0; i < num_networks; i++) {
-            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == 2) {
+            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == kWifi) {
                 if (maxCritera < cached_networks[i].signal_strength) {
                     strcpy(best_network_name, cached_networks[i].network_name);
                     maxCritera = cached_networks[i].signal_strength;
+                } 
+                else {
+                  continue;
                 }
-            } else {
-                continue;
             }
         }
     } else if (strcmp(criteria, "data") == 0) {
         for (int i = 0; i < num_networks; i++) {
-            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == 1) {
+            if (cached_networks[i].password_saved && cached_networks[i].connection_medium == kData) {
                 if (maxCritera < cached_networks[i].signal_strength) {
                     strcpy(best_network_name, cached_networks[i].network_name);
                     maxCritera = cached_networks[i].signal_strength;
