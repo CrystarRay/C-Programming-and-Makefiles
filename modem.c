@@ -178,12 +178,56 @@ char* DetermineNetwork(char* criteria) {
     return best_network_name;
 }
 
+
+char* DetermineNetworkV2(char* criteria) {
+    char* best_network_name = (char*)malloc(MAX_LENGTH * sizeof(char));
+    int maxCritera = 0;
+
+    for (int i = 0; i < num_networks;i++){
+
+      // Wifi Case
+      if (strcmp(criteria, "wifi") == 0) {
+        if (maxCritera < cached_networks[i].signal_strength) {
+          strcpy(best_network_name, cached_networks[i].network_name);
+          maxCritera = cached_networks[i].signal_strength;       
+        }
+
+      }
+      
+      // Data Case
+      else if (strcmp(criteria, "data") == 0) {
+        if (cached_networks[i].connection_medium == kData) {
+          if (maxCritera < cached_networks[i].signal_strength) {
+            strcpy(best_network_name, cached_networks[i].network_name);
+            maxCritera = cached_networks[i].signal_strength;
+          }
+        }
+      }
+
+      // Greedy Case
+      else {
+        if (maxCritera < cached_networks[i].signal_strength) {
+            strcpy(best_network_name, cached_networks[i].network_name);
+            maxCritera = cached_networks[i].signal_strength;
+        }
+      }
+    }
+    return best_network_name;
+}
+
+
 int main(int argc, char *argv[]) {
   if (argc != 2) {
     printf("Incorrect command argument. Please pass in wifi, data, or greedy");
     return 1;
   }
+}
 
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
+    printf("Incorrect command argument. Please pass in wifi, data, or greedy");
+    return 1;
+  }
   printf("Starting up modem...\n");
   printf("Scanning nearby network connections...\n");
   ScanNetworks();
