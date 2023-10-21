@@ -215,14 +215,6 @@ char* DetermineNetworkV2(char* criteria) {
     return best_network_name;
 }
 
-
-int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    printf("Incorrect command argument. Please pass in wifi, data, or greedy");
-    return 1;
-  }
-}
-
 int main(int argc, char *argv[]) {
   if (argc != 2) {
     printf("Incorrect command argument. Please pass in wifi, data, or greedy");
