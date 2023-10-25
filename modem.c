@@ -8,6 +8,7 @@
 #define MAX_LENGTH 20
 
 
+
 typedef enum {kData, kWifi, kUnknown} MEDIUM;
 
 typedef struct network {
@@ -40,22 +41,24 @@ bool ConvertCharToBoolean(char* str) {
         return true;
     }
 }
-/**
+
+/*
   * TODO: This function is buggy and not complete
   *
   * We should first fix this function and then work on fixing ScanNetworksV2().
   * The fixes found in this function will help determine how to fix V2.
-  */
+*/
 
-/**
 
-/**
+
+/*
   * This function early-exits from networks that we don't already have access
   * to. This way we can still scan for 5 networks, but we won't display/attempt
   * to make a decision vs networks we don't have the password for.
   *
   * TODO: This function is buggy and not complete
-  */
+  * 
+*/
 
 void ScanNetworks() {
   // Initialize needed vars
@@ -222,6 +225,9 @@ char* DetermineNetwork(char* criteria) {
         if (cached_networks[i].signal_strength > max_strength) {
             max_strength = cached_networks[i].signal_strength;
             best_network = cached_networks[i].network_name;
+            if (max_strength == 5){
+              return best_network;
+            }
         }
     }
 
@@ -243,7 +249,7 @@ int main(int argc, char *argv[]) {
 
   printf("Starting up modem...\n");
   printf("Scanning nearby network connections...\n");
-  ScanNetworksV2();
+  ScanNetworksV3();
   printf("Networks cached. Now determining network to connect...\n");
   printf("Connection Medium Criteria: %s\n", argv[1]);
   ChooseNetwork(DetermineNetwork(argv[1]));
