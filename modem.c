@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define num_networks 10
+#define num_networks 18
 #define MAX_LENGTH 20
 
 
@@ -18,7 +18,16 @@ typedef struct network {
  bool password_saved;
 } network;
 
+typedef struct best_networks{
+  int best_data;
+  int best_wifi;
+  char best_data_name[MAX_LENGTH];
+  char best_wifi_name[MAX_LENGTH];
+} best_networks;
+
 struct network cached_networks[num_networks];
+
+struct best_networks best_network;
 
 void ChooseNetwork(char* network) {
   printf("Network chosen: %s\n", network);
@@ -41,24 +50,6 @@ bool ConvertCharToBoolean(char* str) {
         return true;
     }
 }
-
-/*
-  * TODO: This function is buggy and not complete
-  *
-  * We should first fix this function and then work on fixing ScanNetworksV2().
-  * The fixes found in this function will help determine how to fix V2.
-*/
-
-
-
-/*
-  * This function early-exits from networks that we don't already have access
-  * to. This way we can still scan for 5 networks, but we won't display/attempt
-  * to make a decision vs networks we don't have the password for.
-  *
-  * TODO: This function is buggy and not complete
-  * 
-*/
 
 void ScanNetworks() {
   // Initialize needed vars
@@ -137,26 +128,6 @@ void ScanNetworksV2() {
   fclose(ptr);
 }
 
-
-
-
-  // If you were to iterate and modify ScanNetworksV2 to be even better,
-  // what would you do? You DO NOT need to write any code, you can just
-  // explain what you would do or write psuedocode.
-
-
-/**
-  * This function selects what network we should connect to based on certain
-  * criteria.
-  *
-  * 1. We should only choose networks that we can connect to
-  * 2. We should only connect to networks based on what criteria we want
-  *    (i.e., Wi-Fi, Data, either).
-  * 3. We should pick the network with the highest signal strength
-  *
-  * criteria    String denoting "wifi", "data", or "greedy"
-  * return      String of best network_name
-  */
 void ScanNetworksV3() {
   FILE *ptr = fopen("experiment_data", "r");
   if (ptr == NULL) {
@@ -166,8 +137,10 @@ void ScanNetworksV3() {
 
   char network_name[MAX_LENGTH];
   int medium, signal_strength;
-  char password_saved_str[6]; // Use a string to be consistent with ScanNetworks()
+  char password_saved_str[6]; 
   int i = 0;
+  best_network.best_data=-1;
+  best_network.best_wifi=-1;
 
   while (i < num_networks && fscanf(ptr, "%s %d %d %s", network_name, &medium, &signal_strength, password_saved_str) == 4) {
     bool password_saved = (strcmp(password_saved_str, "true") == 0); // Convert to bool
@@ -176,12 +149,18 @@ void ScanNetworksV3() {
       cached_networks[i].connection_medium = ConvertIntToMedium(medium);
       cached_networks[i].signal_strength = signal_strength;
       cached_networks[i].password_saved = password_saved;
-      i++;
+      if (medium == 1 && signal_strength > best_network.best_data){
+        best_network.best_data = signal_strength;
+        strcpy(best_network.best_data_name,cached_networks[i].network_name);
+      }
+      if (medium == 2 && signal_strength > best_network.best_wifi){
+        best_network.best_wifi = signal_strength;
+        strcpy(best_network.best_wifi_name,cached_networks[i].network_name);
+      }
     }
+    i++;
   }
-
   fclose(ptr);
-
   if (i < num_networks) {
     printf("File read error or fewer networks found. Scanned %d networks.\n", i);
     exit(1);
@@ -190,7 +169,24 @@ void ScanNetworksV3() {
 
 
 
-
+char* DetermineNetworkV3(char* criteria){
+  if (strcmp(criteria, "wifi") == 0){
+    return best_network.best_wifi_name;
+  }
+  else if (strcmp(criteria, "data") == 0) {
+    return best_network.best_data_name;
+  }
+  else if(strcmp(criteria, "greedy") == 0){
+    if(best_network.best_data > best_network.best_wifi){
+      return best_network.best_wifi_name;
+    }
+    else{
+      return best_network.best_wifi_name;
+    }
+  }
+  printf("Unknown criteria provided. Exiting.\n");
+  exit(1);
+}
 
 char* DetermineNetwork(char* criteria) {
     MEDIUM desired_medium;
@@ -201,7 +197,7 @@ char* DetermineNetwork(char* criteria) {
     } else if (strcmp(criteria, "data") == 0) {
         desired_medium = kData;
     } else if (strcmp(criteria, "greedy") == 0) {
-        desired_medium = kUnknown; // Set to unknown for greedy so that all mediums are considered
+        desired_medium = kUnknown; 
     } else {
         printf("Unknown criteria provided. Exiting.\n");
         exit(1);
@@ -252,7 +248,7 @@ int main(int argc, char *argv[]) {
   ScanNetworksV3();
   printf("Networks cached. Now determining network to connect...\n");
   printf("Connection Medium Criteria: %s\n", argv[1]);
-  ChooseNetwork(DetermineNetwork(argv[1]));
+  ChooseNetwork(DetermineNetworkV3(argv[1]));
 
   return 0;
 }
